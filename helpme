@@ -1,0 +1,13 @@
+# Source en masse lort
+
+source /opt/ros/foxy/setup.bash
+
+. install/setup.bash
+
+# pakke node
+
+ros2 run killb6 killb6
+
+# Bygge pakke efter ændringer
+
+colcon build --packages-select killb6
