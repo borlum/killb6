@@ -49,24 +49,25 @@ class MinimalPublisher(Node):
         # Draw the rectangle around each face
 
         # plt.figure()
+        x, y, w, h = (img.shape[1]/2, img.shape[0]/2, 0, 0)
         if len(faces):
             (x, y, w, h) = faces[0]
-            msg = String()
-            msg.data = "%d,%d" % (x+w/2 - img.shape[1]/2, y+h/2 - img.shape[0]/2)
-            print(msg.data)
-            self.publisher_center.publish(msg)
 
-            cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
+            #cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
 
+        msg = String()
+        msg.data = "%d,%d" % (x+w/2 - img.shape[1]/2, y+h/2 - img.shape[0]/2)
+        print(msg.data)
+        self.publisher_center.publish(msg)
         # plt.imshow(img)
         # plt.pause(1)
         # plt.show(block=True)
         # plt.close()
         # cv2.imshow("result", img)
 
-        msg = String()
-        msg.data = str(base64.b64encode(img))
-        self.publisher_img.publish(msg)
+        # msg = String()
+        # msg.data = str(base64.b64encode(img))
+        # self.publisher_img.publish(msg)
         self.i += 1
 
 def main(args=None):
