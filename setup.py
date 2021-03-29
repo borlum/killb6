@@ -21,7 +21,8 @@ setup(
     entry_points={
         'console_scripts': [
             'killb6 = killb6.killb6:main',
-            'manual = killb6.manual:main'
+            'manual = killb6.manual:main',
+            'camera_control = killb6.camera_control:main'
         ],
     },
 )
