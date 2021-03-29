@@ -4,33 +4,28 @@ from std_msgs.msg import String
 
 from cv_bridge import CvBridge
 import cv2
-
-import pyserial
-
 import matplotlib.pyplot as plt
+
+import base64
 
 min_size      = (50, 100) #(10, 10) # (50, 100)#
 image_scale   = 2
 haar_scale    = 1.1 #1.2 #1.1
-min_neighbors = 5 #2 #5
+min_neighbors = 2 #5
 haar_flags    = cv2.CASCADE_SCALE_IMAGE #0 #cv2.CASCADE_SCALE_IMAGE
 
-haarfile = '/usr/share/opencv4/haarcascades/haarcascade_upperbody.xml'
+haarfile = '/usr/share/opencv4/haarcascades/haarcascade_frontalface_default.xml'
 
 cascade = cv2.CascadeClassifier()
 cascade.load(haarfile)
 br = CvBridge()
 
-
-# Serial
-#motor1 = serial.Serial("/dev/ttyUSB0")
-#motor2 = serial.Serial("/dev/ttyUSB1")
-
 class MinimalPublisher(Node):
 
     def __init__(self):
         super().__init__('minimal_publisher')
-        self.publisher_ = self.create_publisher(String, 'topic', 10)
+        self.publisher_img = self.create_publisher(String, 'facial_detection/img', 10)
+        self.publisher_center = self.create_publisher(String, 'facial_detection/center_point', 10)
         timer_period = 0.5  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.i = 0
@@ -48,30 +43,30 @@ class MinimalPublisher(Node):
         # convert color input image to grayscale
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-        # scale input image for faster processing
-        small_img = cv2.resize(gray, new_size, interpolation = cv2.INTER_LINEAR)
+        # Detect the faces
+        faces = cascade.detectMultiScale(gray, 1.1, 4)
+        #print(faces)
+        # Draw the rectangle around each face
 
-        small_img = cv2.equalizeHist(small_img)
-        
-        if(cascade):
-            faces = cascade.detectMultiScale(small_img, haar_scale, min_neighbors, haar_flags, min_size)
-            if faces is not None:
-                for (x, y, w, h) in faces:
-                    # the input to detectMultiScale was resized, so scale the
-                    # bounding box of each face and convert it to two CvPoints
-                    pt1 = (int(x * image_scale), int(y * image_scale))
-                    pt2 = (int((x + w) * image_scale), int((y + h) * image_scale))
-                    cv2.rectangle(img, pt1, pt2, (255, 0, 0), 3, 8, 0)
+        # plt.figure()
+        if len(faces):
+            (x, y, w, h) = faces[0]
+            msg = String()
+            msg.data = "%d,%d" % (x+w/2 - img.shape[1]/2, y+h/2 - img.shape[0]/2)
+            print(msg.data)
+            self.publisher_center.publish(msg)
 
-        plt.figure()
-        plt.imshow(img)
-        plt.show()
-        #cv2.imshow("result", img)
+            cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
+
+        # plt.imshow(img)
+        # plt.pause(1)
+        # plt.show(block=True)
+        # plt.close()
+        # cv2.imshow("result", img)
 
         msg = String()
-        msg.data = 'Hello World: %d' % self.i
-        self.publisher_.publish(msg)
-        self.get_logger().info('Publishing: "%s"' % msg.data)
+        msg.data = str(base64.b64encode(img))
+        self.publisher_img.publish(msg)
         self.i += 1
 
 def main(args=None):
