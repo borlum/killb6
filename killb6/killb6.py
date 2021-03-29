@@ -30,10 +30,11 @@ class MinimalPublisher(Node):
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.i = 0
 
+        self.webcam = cv2.VideoCapture(0)
+
+
     def timer_callback(self):
-        webcam = cv2.VideoCapture(0)
-        check, img = webcam.read()
-        webcam.release()
+        check, img = self.webcam.read()
 
         #imgmsg = br.cv2_to_imgmsg(frame)
         #img = br.imgmsg_to_cv2(imgmsg, "bgr8")
