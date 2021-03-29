@@ -22,7 +22,11 @@ class CameraControl(Node):
     def listener_callback(self, msg):
         x,y = msg.data.split(",")
 
-        if float(x) > 0:
+        dx = float(x)
+        if dx == 0:
+            motor1.write("3".encode())
+            motor2.write("3".encode())
+        elif dx > 0:
             motor1.write("1".encode())
             motor2.write("2".encode())
         else:
