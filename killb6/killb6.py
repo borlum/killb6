@@ -4,8 +4,9 @@ from std_msgs.msg import String
 
 from cv_bridge import CvBridge
 import cv2
-
 import matplotlib.pyplot as plt
+
+import base64
 
 min_size      = (50, 100) #(10, 10) # (50, 100)#
 image_scale   = 2
@@ -23,7 +24,8 @@ class MinimalPublisher(Node):
 
     def __init__(self):
         super().__init__('minimal_publisher')
-        self.publisher_ = self.create_publisher(String, 'topic', 10)
+        self.publisher_img = self.create_publisher(String, 'facial_detection/img', 10)
+        self.publisher_center = self.create_publisher(String, 'facial_detection/center_point', 10)
         timer_period = 0.5  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.i = 0
@@ -43,21 +45,28 @@ class MinimalPublisher(Node):
 
         # Detect the faces
         faces = cascade.detectMultiScale(gray, 1.1, 4)
+        #print(faces)
         # Draw the rectangle around each face
-        for (x, y, w, h) in faces:
+
+        # plt.figure()
+        if len(faces):
+            (x, y, w, h) = faces[0]
+            msg = String()
+            msg.data = "%d,%d" % (x+w/2 - img.shape[1]/2, y+h/2 - img.shape[0]/2)
+            print(msg.data)
+            self.publisher_center.publish(msg)
+
             cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
 
-        plt.figure()
-        plt.imshow(img)
-        plt.pause(1)
-        plt.show(block=False)
-        plt.close()
-        #cv2.imshow("result", img)
+        # plt.imshow(img)
+        # plt.pause(1)
+        # plt.show(block=True)
+        # plt.close()
+        # cv2.imshow("result", img)
 
         msg = String()
-        msg.data = 'Hello World: %d' % self.i
-        self.publisher_.publish(msg)
-        self.get_logger().info('Publishing: "%s"' % msg.data)
+        msg.data = str(base64.b64encode(img))
+        self.publisher_img.publish(msg)
         self.i += 1
 
 def main(args=None):
