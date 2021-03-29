@@ -21,7 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'killb6 = killb6.killb6:main',
-            'subscribe = killb6.subscriber:main'
+            'manual = killb6.manual:main'
         ],
     },
 )

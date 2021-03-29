@@ -5,6 +5,8 @@ from std_msgs.msg import String
 from cv_bridge import CvBridge
 import cv2
 
+import pyserial
+
 import matplotlib.pyplot as plt
 
 min_size      = (50, 100) #(10, 10) # (50, 100)#
@@ -18,6 +20,11 @@ haarfile = '/usr/share/opencv4/haarcascades/haarcascade_upperbody.xml'
 cascade = cv2.CascadeClassifier()
 cascade.load(haarfile)
 br = CvBridge()
+
+
+# Serial
+#motor1 = serial.Serial("/dev/ttyUSB0")
+#motor2 = serial.Serial("/dev/ttyUSB1")
 
 class MinimalPublisher(Node):
 
