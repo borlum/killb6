@@ -16,16 +16,19 @@ class CameraViewer(Node):
             Image,
             "facial_detection/img",
             self.listener_callback,
-            10)
+            1)
         self.subscription  # prevent unused variable warning
 
+        #self.img = np.zeros((480,640,3))
+
     def listener_callback(self, msg):
-        m = msg
-        np_img = np.reshape(m.data, (m.height, m.width, 3)).astype(np.uint8)
-        plt.cla()
-        plt.imshow(np_img)
-        plt.pause(0.05)
+        img = np.reshape(msg.data, (msg.height, msg.width, 3)).astype(np.uint8)
+        print("msg")
+
+        plt.gca()
+        plt.imshow(img)
         plt.show(block=False)
+        plt.pause(0.01)
 
 def main(args=None):
     rclpy.init(args=args)
