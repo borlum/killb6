@@ -1,13 +1,13 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
+from sensor_msgs.msg import Image
 
 from cv_bridge import CvBridge
 import cv2
-import matplotlib.pyplot as plt
 
 import base64
-
+import numpy as np
 min_size      = (50, 100) #(10, 10) # (50, 100)#
 image_scale   = 2
 haar_scale    = 1.1 #1.2 #1.1
@@ -24,9 +24,9 @@ class MinimalPublisher(Node):
 
     def __init__(self):
         super().__init__('minimal_publisher')
-        self.publisher_img = self.create_publisher(String, 'facial_detection/img', 10)
-        self.publisher_center = self.create_publisher(String, 'facial_detection/center_point', 10)
-        timer_period = 0.5  # seconds
+        self.publisher_img = self.create_publisher(Image, 'facial_detection/img', 1)
+        self.publisher_center = self.create_publisher(String, 'facial_detection/center_point', 1)
+        timer_period = 0.05  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.i = 0
 
@@ -35,10 +35,6 @@ class MinimalPublisher(Node):
 
     def timer_callback(self):
         check, img = self.webcam.read()
-
-        #imgmsg = br.cv2_to_imgmsg(frame)
-        #img = br.imgmsg_to_cv2(imgmsg, "bgr8")
-
         new_size = (int(img.shape[1] / image_scale), int(img.shape[0] / image_scale))
 
         # convert color input image to grayscale
@@ -53,22 +49,15 @@ class MinimalPublisher(Node):
         x, y, w, h = (img.shape[1]/2, img.shape[0]/2, 0, 0)
         if len(faces):
             (x, y, w, h) = faces[0]
-
-            #cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
+            cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
 
         msg = String()
         msg.data = "%d,%d" % (x+w/2 - img.shape[1]/2, y+h/2 - img.shape[0]/2)
         print(msg.data)
         self.publisher_center.publish(msg)
-        # plt.imshow(img)
-        # plt.pause(1)
-        # plt.show(block=True)
-        # plt.close()
-        # cv2.imshow("result", img)
 
-        # msg = String()
-        # msg.data = str(base64.b64encode(img))
-        # self.publisher_img.publish(msg)
+        msg = CvBridge().cv2_to_imgmsg(img, "bgr8")
+        self.publisher_img.publish(msg)
         self.i += 1
 
 def main(args=None):
