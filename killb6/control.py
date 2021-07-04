@@ -7,10 +7,9 @@ import serial
 motor1 = serial.Serial("/dev/ttyUSB0")
 motor2 = serial.Serial("/dev/ttyUSB1")
 
-class CameraControl(Node):
-
+class Control(Node):
     def __init__(self):
-        super().__init__("killb6_camera_control")
+        super().__init__("killb6_control")
         
         self.subscription = self.create_subscription(
             String,
@@ -23,6 +22,7 @@ class CameraControl(Node):
         x,y = msg.data.split(",")
 
         dx = float(x)
+
         if dx == 0:
             motor1.write("3".encode())
             motor2.write("3".encode())
@@ -36,14 +36,11 @@ class CameraControl(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    camera_control = CameraControl()
+    control = Control()
 
-    rclpy.spin(camera_control)
+    rclpy.spin(control)
 
-    # Destroy the node explicitly
-    # (optional - otherwise it will be done automatically
-    # when the garbage collector destroys the node object)
-    camera_control.destroy_node()
+    control.destroy_node()
     rclpy.shutdown()
 
 if __name__ == '__main__':
