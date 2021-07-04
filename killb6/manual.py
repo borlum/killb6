@@ -2,54 +2,44 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-from curtsies import Input
-import serial
+import time
 
-# Serial
-motor1 = serial.Serial("/dev/ttyUSB0")
-motor2 = serial.Serial("/dev/ttyUSB1")
+from curtsies import Input
 
 # Define controls
+speed = 200
+turn_speed = 100
+fire = 1000
+
 controls = {}
-controls['KEY_UP'] = 'F'
-controls['KEY_DOWN'] = 'B'
-controls['KEY_RIGHT'] = 'R'
-controls['KEY_LEFT'] = 'L'
+controls['KEY_UP'] = '%d, %d' % (speed, speed)
+controls['KEY_DOWN'] = '%d, %d' % (-speed, -speed)
+controls['KEY_RIGHT'] = '%d, %d' % (turn_speed, -turn_speed)
+controls['KEY_LEFT'] = '%d, %d' % (-turn_speed,  turn_speed)
+controls['f'] = '%d, %d' % (fire, fire)
+controls['s'] = '%d, %d' % (0, 0)
 
 class ManualControl(Node):
 
     def __init__(self):
         super().__init__("killb6_manual_control")
-        self.publisher_ = self.create_publisher(String, "topic", 10)
-        timer_period = 0.5  # seconds
-        self.timer = self.create_timer(timer_period, self.timer_callback)
+        self.publisher_ = self.create_publisher(String, "motor/motor_speed_rpm", 1)
         self.i = 0
 
         self.run()
 
-    def timer_callback(self):
-        msg = String()
-        msg.data = "Hello World: %d" % self.i
-        self.publisher_.publish(msg)
-        self.get_logger().info("Publishing: %s" % msg.data)
-        self.i += 1
 
     def run(self):
         with Input(keynames='curses') as input_generator:
             for e in input_generator:
                 if e in controls.keys():
-                    if e == "KEY_UP":
-                        motor1.write("1".encode())
-                        motor2.write("1".encode())
-                    if e == "KEY_DOWN":
-                        motor1.write("3".encode())
-                        motor2.write("3".encode())
-                    if e == "KEY_LEFT":
-                        motor1.write("1".encode())
-                        motor2.write("3".encode())
-                    if e == "KEY_RIGHT":
-                        motor1.write("3".encode())
-                        motor2.write("1".encode())
+                    msg = String()
+                    msg.data = controls[e]
+                    print("sending:")
+                    print(msg.data)
+                    self.publisher_.publish(msg)
+
+            time.sleep(1)
 
 def main(args=None):
     rclpy.init(args=args)
