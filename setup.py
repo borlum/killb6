@@ -23,7 +23,8 @@ setup(
             'killb6 = killb6.killb6:main',
             'manual = killb6.manual:main',
             'camera_view = killb6.camera_view:main',
-            'control = killb6.control:main'
+            'control = killb6.control:main',
+            'auto = killb6.auto:main'
         ],
     },
 )
