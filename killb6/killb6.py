@@ -9,12 +9,14 @@ import cv2
 import base64
 import numpy as np
 min_size      = (50, 100) #(10, 10) # (50, 100)#
-image_scale   = 2
+image_scale   = 5
 haar_scale    = 1.1 #1.2 #1.1
 min_neighbors = 2 #5
 haar_flags    = cv2.CASCADE_SCALE_IMAGE #0 #cv2.CASCADE_SCALE_IMAGE
 
 haarfile = '/usr/share/opencv4/haarcascades/haarcascade_frontalface_default.xml'
+#haarfile = '/usr/share/opencv4/haarcascades/haarcascade_upperbody.xml'
+
 
 cascade = cv2.CascadeClassifier()
 cascade.load(haarfile)
@@ -26,11 +28,14 @@ class MinimalPublisher(Node):
         super().__init__('minimal_publisher')
         self.publisher_img = self.create_publisher(Image, 'facial_detection/img', 1)
         self.publisher_center = self.create_publisher(String, 'facial_detection/center_point', 1)
-        timer_period = 0.05  # seconds
+        timer_period = 0.1  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.i = 0
 
         self.webcam = cv2.VideoCapture(0)
+
+        self.webcam.set(3, 50)
+        self.webcam.set(4, 50)
 
 
     def timer_callback(self):
@@ -52,9 +57,11 @@ class MinimalPublisher(Node):
             cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
 
         msg = String()
-        msg.data = "%d,%d" % (x+w/2 - img.shape[1]/2, y+h/2 - img.shape[0]/2)
-        print(msg.data)
+        detected = 0 if len(faces) == 0 else 1
+        msg.data = "%d,%d,%d" % (x+w/2 - img.shape[1]/2, y+h/2 - img.shape[0]/2, detected)
         self.publisher_center.publish(msg)
+        
+        print(msg.data)
 
         msg = CvBridge().cv2_to_imgmsg(img, "bgr8")
         self.publisher_img.publish(msg)

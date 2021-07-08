@@ -13,25 +13,20 @@ class Control(Node):
         
         self.subscription = self.create_subscription(
             String,
-            "facial_detection/center_point",
+            "motor/motor_speed_rpm",
             self.listener_callback,
             10)
         self.subscription  # prevent unused variable warning
 
     def listener_callback(self, msg):
-        x,y = msg.data.split(",")
+        motor1_rpm, motor2_rpm = msg.data.split(",")
 
-        dx = float(x)
+        print(f"MOTOR 1 RPM: {motor1_rpm}")
+        print(f"MOTOR 2 RPM: {motor2_rpm}")
 
-        if dx == 0:
-            motor1.write("3".encode())
-            motor2.write("3".encode())
-        elif dx > 0:
-            motor1.write("1".encode())
-            motor2.write("2".encode())
-        else:
-            motor1.write("2".encode())
-            motor2.write("1".encode())
+        motor1.write(f"{motor1_rpm}\n".encode())
+        motor2.write(f"{motor2_rpm}\n".encode())
+
 
 def main(args=None):
     rclpy.init(args=args)
