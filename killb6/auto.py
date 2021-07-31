@@ -29,7 +29,7 @@ class AutoControl(Node):
         x,y,d = msg.data.split(",")
         
         msg = String()
-        msg.data = "10,-10"
+        msg.data = "100,-100"
         
         if int(d) > 0:
             x = float(x)
