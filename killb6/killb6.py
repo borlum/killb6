@@ -5,19 +5,21 @@ from sensor_msgs.msg import Image
 
 from cv_bridge import CvBridge
 import cv2
+import time
+import face_recognition
 
 import imutils
 
 import base64
 import numpy as np
 min_size      = (50, 100) #(10, 10) # (50, 100)#
-image_scale   = 1
+image_scale   = 4
 haar_scale    = 1.2 #1.2 #1.1
 min_neighbors = 2 #5
 haar_flags    = cv2.CASCADE_SCALE_IMAGE #0 #cv2.CASCADE_SCALE_IMAGE
 
-#haarfile = '/usr/share/opencv4/haarcascades/haarcascade_frontalface_default.xml'
-haarfile = '/usr/share/opencv4/haarcascades/haarcascade_upperbody.xml'
+haarfile = '/usr/share/opencv4/haarcascades/haarcascade_frontalface_default.xml'
+#haarfile = '/usr/share/opencv4/haarcascades/haarcascade_upperbody.xml'
 #haarfile = '/usr/share/opencv4/haarcascades/haarcascade_fullbody.xml'
 
 
@@ -33,7 +35,7 @@ class MinimalPublisher(Node):
         self.publisher_center = self.create_publisher(String, 'facial_detection/center_point', 1)
         
         timer_period = 0.1  # seconds
-        self.timer = self.create_timer(timer_period, self.timer_callback3)
+        self.timer = self.create_timer(timer_period, self.jokke)
         self.i = 0
 
         self.webcam = cv2.VideoCapture(0)
@@ -45,8 +47,13 @@ class MinimalPublisher(Node):
         self.hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
 
     def timer_callback3(self):
+        tic = time.perf_counter()
         check, captured_frame = self.webcam.read()
         output_frame = captured_frame.copy()
+        toc = time.perf_counter()
+
+        print(f"Downloaded the tutorial in {toc - tic:0.4f} seconds")
+
 
         # Convert original image to BGR, since Lab is only available from BGR
         captured_frame_bgr = cv2.cvtColor(captured_frame, cv2.COLOR_BGRA2BGR)
@@ -85,7 +92,14 @@ class MinimalPublisher(Node):
         self.i += 1
 
     def timer_callback2(self):
+        tic = time.perf_counter()
+
         check, img = self.webcam.read()
+        new_size = (int(img.shape[1] / image_scale), int(img.shape[0] / image_scale))
+
+        toc = time.perf_counter()
+
+        print(f"Downloaded the tutorial in {toc - tic:0.4f} seconds")
 
         img = imutils.resize(img, width=min(400, img.shape[1]))
         grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -109,14 +123,26 @@ class MinimalPublisher(Node):
         self.i += 1
 
     def timer_callback(self):
+        tic = time.perf_counter()
+
         check, img = self.webcam.read()
         new_size = (int(img.shape[1] / image_scale), int(img.shape[0] / image_scale))
+
+        toc = time.perf_counter()
+
+        print(f"Image capture time: {toc - tic:0.4f} seconds")
 
         # convert color input image to grayscale
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # Detect the faces
-        faces = cascade.detectMultiScale(gray, 1.1, 5)
+        tic = time.perf_counter()
+        faces = cascade.detectMultiScale(gray, scaleFactor=1.05,
+            minNeighbors=7, minSize=(30, 30),
+	        flags=cv2.CASCADE_SCALE_IMAGE
+        )
+        toc = time.perf_counter()
+        print(f"detectMultiScale: {toc - tic:0.4f} seconds")
         #print(faces)
         # Draw the rectangle around each face
 
@@ -132,6 +158,44 @@ class MinimalPublisher(Node):
         self.publisher_center.publish(msg)
         
         print(msg.data)
+
+        msg = CvBridge().cv2_to_imgmsg(img, "bgr8")
+        self.publisher_img.publish(msg)
+        self.i += 1
+
+    def jokke(self):
+        tic = time.perf_counter()
+
+        check, img = self.webcam.read()
+        new_size = (int(img.shape[1] / image_scale), int(img.shape[0] / image_scale))
+
+        toc = time.perf_counter()
+
+        print(f"Image capture time: {toc - tic:0.4f} seconds")
+
+        small_frame = cv2.resize(img, (0, 0), fx=0.25, fy=0.25)
+
+        # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
+        rgb_small_frame = small_frame[:, :, ::-1]
+        tic = time.perf_counter()
+        face_locations = face_recognition.face_locations(rgb_small_frame)
+        toc = time.perf_counter()
+        print(f"face_recognition {toc - tic:0.4f} seconds")
+
+        for (top, right, bottom, left) in face_locations:
+            # Scale back up face locations since the frame we detected in was scaled to 1/4 size
+            top *= 4
+            right *= 4
+            bottom *= 4
+            left *= 4
+
+            # Draw a box around the face
+            cv2.rectangle(img, (left, top), (right, bottom), (0, 0, 255), 2)
+       
+        #msg.data = "%d,%d,%d" % (x+w/2 - img.shape[1]/2, y+h/2 - img.shape[0]/2, detected)
+        #self.publisher_center.publish(msg)
+        
+        #print(msg.data)
 
         msg = CvBridge().cv2_to_imgmsg(img, "bgr8")
         self.publisher_img.publish(msg)
